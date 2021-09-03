@@ -1,7 +1,8 @@
 import Utilities from "./Utilities";
+import loMerge from 'lodash/merge';
 
 export default class Configuration {
-
+  
   constructor(configObject) {
 
     window.CookieConsent.buffer = {
@@ -10,7 +11,7 @@ export default class Configuration {
     }
 
     // Wrapper filter function
-    window.CookieConsent.wrapper = function () { };
+    window.CookieConsent.wrapper = function() {};
 
     // Settings injector for users
     window.CookieConsent.setConfiguration = this.setConfiguration.bind(this);
@@ -36,12 +37,15 @@ export default class Configuration {
             barMainText: 'This website uses cookies to ensure you get the best experience on our website.',
             barLinkSetting: 'Cookie Settings',
             barBtnAcceptAll: 'Accept all cookies',
+            barBtnDenyAll: 'Deny all not mandatory cookies',
+            barLinkLearnMore: 'https://www.garanteprivacy.it/web/garante-privacy-en/home_en',
+            barLinkLearnMoreDesc: 'Learn more',
+
             modalMainTitle: 'Cookie settings',
             modalMainText: 'Cookies are small piece of data sent from a website and stored on the user\'s computer by the user\'s web browser while the user is browsing. Your browser stores each message in a small file, called cookie. When you request another page from the server, your browser sends the cookie back to the server. Cookies were designed to be a reliable mechanism for websites to remember information or to record the user\'s browsing activity.',
             modalBtnSave: 'Save current settings',
             modalBtnAcceptAll: 'Accept all cookies and close',
             modalAffectedSolutions: 'Affected solutions:',
-            learnMore: 'Learn More',
             on: 'On',
             off: 'Off',
           },
@@ -49,12 +53,15 @@ export default class Configuration {
             barMainText: 'Ez a weboldal Sütiket használ a jobb felhasználói élmény érdekében.',
             barLinkSetting: 'Süti beállítások',
             barBtnAcceptAll: 'Minden süti elfogadása',
+            barBtnDenyAll: 'Deny all cookies',
+            barLinkLearnMore: 'https://www.garanteprivacy.it/web/garante-privacy-en/home_en',
+            barLinkLearnMoreDesc: 'Learn more',
+
             modalMainTitle: 'Süti beállítások',
             modalMainText: 'A HTTP-süti (általában egyszerűen süti, illetve angolul cookie) egy információcsomag, amelyet a szerver küld a webböngészőnek, majd a böngésző visszaküld a szervernek minden, a szerver felé irányított kérés alkalmával. Amikor egy weboldalt kérünk le a szervertől, akkor a böngésző elküldi a számára elérhető sütiket. A süti-ket úgy tervezték, hogy megbízható mechanizmust biztosítsanak a webhelyek számára az információk megőrzésére vagy a felhasználók böngészési tevékenységének rögzítésére.',
             modalBtnSave: 'Beállítások mentése',
             modalBtnAcceptAll: 'Minden Süti elfogadása',
             modalAffectedSolutions: 'Mire lesz ez hatással:',
-            learnMore: 'Tudj meg többet',
             on: 'Be',
             off: 'Ki',
           }
@@ -70,10 +77,8 @@ export default class Configuration {
 
   setConfiguration(configObject) {
     // The user overrides the default config
-    console.log(window.CookieConsent.config, configObject, { ...window.CookieConsent.config, ...configObject });
+    loMerge(window.CookieConsent.config, configObject);
 
-    this.mergeDeep(window.CookieConsent.config, configObject)
-    //loMerge(window.CookieConsent.config, configObject);
     // The cookie overrides the default and user config
     this.cookieToConfig();
 
@@ -91,7 +96,7 @@ export default class Configuration {
 
     document.cookie.split(';').filter((item) => {
 
-      if (item.indexOf('cconsent') >= 0) {
+      if (item.indexOf('cconsent')  >= 0) {
         var cookieData = JSON.parse(item.split('=')[1]);
 
         // We check cookie version. If older we need to renew cookie.
@@ -107,18 +112,18 @@ export default class Configuration {
         for (let key in cookieData.categories) {
 
           // The cookie contains category not present in user config so we invalidate cookie
-          if (typeof window.CookieConsent.config.categories[key] === 'undefined') {
+          if(typeof window.CookieConsent.config.categories[key] === 'undefined') {
             return removeReload();
           }
         }
 
         // We check if cookie data services also exist in user config
-        cookieData.services.forEach(function (service) {
+        cookieData.services.forEach(function(service){
 
           // The cookie contains service not present in user config so we invalidate cookie
-          if (typeof window.CookieConsent.config.services[service] === 'undefined') {
+          if(typeof window.CookieConsent.config.services[service] === 'undefined') {
             return removeReload();
-          }
+          } 
         });
 
         // We we integrate cookie data into the global config object
@@ -130,32 +135,8 @@ export default class Configuration {
         return true;
       }
     });
-
+    
     return false;
   }
 
-
-  // Simple object check.
-  isObject(item) {
-    return (item && typeof item === 'object' && !Array.isArray(item));
-  }
-
-  //Deep merge two objects.
-  mergeDeep(target, ...sources) {
-    if (!sources.length) return target;
-    const source = sources.shift();
-
-    if (this.isObject(target) && this.isObject(source)) {
-      for (const key in source) {
-        if (this.isObject(source[key])) {
-          if (!target[key]) Object.assign(target, { [key]: {} });
-          this.mergeDeep(target[key], source[key]);
-        } else {
-          Object.assign(target, { [key]: source[key] });
-        }
-      }
-    }
-
-    return this.mergeDeep(target, ...sources);
-  }
 }
